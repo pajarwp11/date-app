@@ -44,3 +44,8 @@ type UserResponse struct {
 	Occupation string `json:"occupation"`
 	Bio        string `json:"bio"`
 }
+
+type UpdateIsPremiumRequest struct {
+	IsPremium *int `json:"is_premium"`
+	UserID    int  `json:"user_id"`
+}

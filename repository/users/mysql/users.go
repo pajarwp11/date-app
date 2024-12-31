@@ -97,10 +97,7 @@ func (u *usersRepository) GetRandomUser(userId int, excludedId []string) (*users
 
 func (u *usersRepository) UpdateIsPremium(id int, status int) error {
 	query := "UPDATE users SET is_premium=? WHERE id=?"
-	row := u.DB.QueryRow(query, status, id)
-
-	var user users.UserData
-	err := row.Scan(&user.IsPremium)
+	_, err := u.DB.Exec(query, status, id)
 	if err != nil {
 		return err
 	}

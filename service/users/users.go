@@ -16,6 +16,7 @@ type Users interface {
 	Create(data *userModel.CreateUserRequest) error
 	Login(data *userModel.LoginRequest) (*userModel.LoginResponse, error)
 	GetRandomUser(userId int) (*userModel.UserResponse, error)
+	UpdateIsPremium(data *userModel.UpdateIsPremiumRequest) error
 }
 
 type usersService struct {
@@ -91,4 +92,12 @@ func (u *usersService) GetRandomUser(userId int) (*userModel.UserResponse, error
 		return nil, errors.New("error get user: " + err.Error())
 	}
 	return randomUser, nil
+}
+
+func (u *usersService) UpdateIsPremium(data *userModel.UpdateIsPremiumRequest) error {
+	err := u.usersRepo.UpdateIsPremium(data.UserID, *data.IsPremium)
+	if err != nil {
+		return errors.New("error update is premium: " + err.Error())
+	}
+	return nil
 }

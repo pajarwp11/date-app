@@ -13,6 +13,7 @@ type Users interface {
 	UserRegister(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
 	GetRandomUser(w http.ResponseWriter, r *http.Request)
+	UpdateIsPremium(w http.ResponseWriter, r *http.Request)
 }
 
 type usersHandler struct {
@@ -115,5 +116,38 @@ func (u *usersHandler) GetRandomUser(w http.ResponseWriter, r *http.Request) {
 	res.Message = "get random user success"
 	res.Data = data
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+func (u *usersHandler) UpdateIsPremium(w http.ResponseWriter, r *http.Request) {
+	var res models.GeneralResponse
+	var req usersModel.UpdateIsPremiumRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = "error bind request: " + err.Error()
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	if req.IsPremium == nil || req.UserID == 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = "is_premium and user_id must be filled"
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	err = u.usersService.UpdateIsPremium(&req)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	res.Code = http.StatusCreated
+	res.Message = "update success"
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(res)
 }

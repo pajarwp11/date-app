@@ -22,6 +22,7 @@ func NewRoute() *mux.Router {
 	router.HandleFunc("/user", userHandlers.UserRegister).Methods(http.MethodPost)
 	router.HandleFunc("/user/login", userHandlers.Login).Methods(http.MethodPost)
 	router.Handle("/user/view", middleware.JWTMiddleware(http.HandlerFunc(userHandlers.GetRandomUser))).Methods(http.MethodGet)
+	router.HandleFunc("/user/premium", userHandlers.UpdateIsPremium).Methods(http.MethodPut)
 
 	return router
 }
