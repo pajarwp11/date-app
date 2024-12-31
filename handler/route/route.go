@@ -19,10 +19,10 @@ func NewRoute() *mux.Router {
 	userHandlers := userHandler.NewUsersHandler(userService)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/user", userHandlers.UserRegister).Methods(http.MethodPost)
+	router.Handle("/user", middleware.ApiKeyMiddleware(http.HandlerFunc(userHandlers.UserRegister))).Methods(http.MethodPost)
 	router.HandleFunc("/user/login", userHandlers.Login).Methods(http.MethodPost)
 	router.Handle("/user/view", middleware.JWTMiddleware(http.HandlerFunc(userHandlers.GetRandomUser))).Methods(http.MethodGet)
-	router.HandleFunc("/user/premium", userHandlers.UpdateIsPremium).Methods(http.MethodPut)
+	router.Handle("/user/premium", middleware.ApiKeyMiddleware(http.HandlerFunc(userHandlers.UpdateIsPremium))).Methods(http.MethodPut)
 	router.Handle("/user/like", middleware.JWTMiddleware(http.HandlerFunc(userHandlers.UserLike))).Methods(http.MethodPost)
 
 	return router
