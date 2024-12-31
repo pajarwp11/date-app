@@ -5,7 +5,6 @@ import (
 	"date-app/repository/users"
 	"date-app/utils/jwt"
 	"date-app/utils/password"
-	"encoding/json"
 	"errors"
 	"time"
 )
@@ -31,13 +30,6 @@ func (u *usersService) Create(data *userModel.CreateUserRequest) error {
 	data.Password, err = password.HashPassword(data.Password)
 	if err != nil {
 		return errors.New("error hash password: " + err.Error())
-	}
-	if data.AdditionalData != nil {
-		addData, err := json.Marshal(data.AdditionalData)
-		if err != nil {
-			return errors.New("error marshal additional data: " + err.Error())
-		}
-		data.AdditionalData = string(addData)
 	}
 	err = u.usersRepo.Create(data)
 	if err != nil {

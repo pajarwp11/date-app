@@ -21,8 +21,8 @@ func NewUsersRepository(db *sql.DB) Users {
 }
 
 func (u *usersRepository) Create(data *users.CreateUserRequest) error {
-	query := "INSERT INTO users (username,password,fullname,gender,location,education,occupation,additional_data) VALUES (?,?,?,?,?,?,?,?)"
-	_, err := u.DB.Exec(query, data.Username, data.Password, data.Fullname, data.Gender, data.Location, data.Education, data.Occupation, data.AdditionalData)
+	query := "INSERT INTO users (username,password,fullname,gender,location,education,occupation,bio) VALUES (?,?,?,?,?,?,?,?)"
+	_, err := u.DB.Exec(query, data.Username, data.Password, data.Fullname, data.Gender, data.Location, data.Education, data.Occupation, data.Bio)
 	return err
 }
 
