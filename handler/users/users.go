@@ -103,7 +103,7 @@ func (u *usersHandler) GetRandomUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(res)
 		return
 	}
-	data, err := u.usersService.GetRandomUser(claims.UserID, claims.IsPremium)
+	data, err := u.usersService.GetRandomUser(claims.UserID)
 	if err != nil {
 		res.Code = http.StatusInternalServerError
 		res.Message = err.Error()

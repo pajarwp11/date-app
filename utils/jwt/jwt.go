@@ -11,15 +11,13 @@ import (
 )
 
 type CustomClaim struct {
-	UserID    int `json:"user_id"`
-	IsPremium int `json:"is_premium"`
+	UserID int `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-func CreateToken(userID int, isPremium int, expirationTime time.Time) (string, error) {
+func CreateToken(userID int, expirationTime time.Time) (string, error) {
 	claims := CustomClaim{
-		UserID:    userID,
-		IsPremium: isPremium,
+		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

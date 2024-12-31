@@ -11,6 +11,8 @@ type Users interface {
 	Create(data *users.CreateUserRequest) error
 	GetByUsername(username string) (*users.UserData, error)
 	GetRandomUser(userId int, excludedId []string) (*users.UserResponse, error)
+	GetByID(id int) (*users.UserData, error)
+	UpdateIsPremium(id int, status int) error
 }
 type usersRepository struct {
 	DB *sql.DB
@@ -29,14 +31,30 @@ func (u *usersRepository) Create(data *users.CreateUserRequest) error {
 }
 
 func (u *usersRepository) GetByUsername(username string) (*users.UserData, error) {
-	query := "SELECT id,password,is_premium FROM users WHERE username=?"
+	query := "SELECT id,password FROM users WHERE username=?"
 	row := u.DB.QueryRow(query, username)
 
 	var user users.UserData
-	err := row.Scan(&user.ID, &user.Password, &user.IsPremium)
+	err := row.Scan(&user.ID, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no user found with username %s", username)
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (u *usersRepository) GetByID(id int) (*users.UserData, error) {
+	query := "SELECT is_premium FROM users WHERE id=?"
+	row := u.DB.QueryRow(query, id)
+
+	var user users.UserData
+	err := row.Scan(&user.IsPremium)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no user found with id %d", id)
 		}
 		return nil, err
 	}
@@ -75,4 +93,17 @@ func (u *usersRepository) GetRandomUser(userId int, excludedId []string) (*users
 	}
 
 	return &user, nil
+}
+
+func (u *usersRepository) UpdateIsPremium(id int, status int) error {
+	query := "UPDATE users SET is_premium=? WHERE id=?"
+	row := u.DB.QueryRow(query, status, id)
+
+	var user users.UserData
+	err := row.Scan(&user.IsPremium)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

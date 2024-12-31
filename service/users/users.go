@@ -15,7 +15,7 @@ import (
 type Users interface {
 	Create(data *userModel.CreateUserRequest) error
 	Login(data *userModel.LoginRequest) (*userModel.LoginResponse, error)
-	GetRandomUser(userId int, isPremium int) (*userModel.UserResponse, error)
+	GetRandomUser(userId int) (*userModel.UserResponse, error)
 }
 
 type usersService struct {
@@ -53,7 +53,7 @@ func (u *usersService) Login(data *userModel.LoginRequest) (*userModel.LoginResp
 		return nil, errors.New("password is not matched")
 	}
 	expirationTime := time.Now().Add(2 * time.Hour)
-	token, err := jwt.CreateToken(userData.ID, userData.IsPremium, expirationTime)
+	token, err := jwt.CreateToken(userData.ID, expirationTime)
 	if err != nil {
 		return nil, errors.New("create token failed: " + err.Error())
 	}
@@ -64,13 +64,18 @@ func (u *usersService) Login(data *userModel.LoginRequest) (*userModel.LoginResp
 	return &tokenData, nil
 }
 
-func (u *usersService) GetRandomUser(userId int, isPremium int) (*userModel.UserResponse, error) {
+func (u *usersService) GetRandomUser(userId int) (*userModel.UserResponse, error) {
 	ctx := context.Background()
 	viewedUsers, err := u.usersRedisRepo.GetViewedUser(ctx, "user:view:"+strconv.Itoa(userId))
 	if err != nil {
 		return nil, errors.New("error get user: " + err.Error())
 	}
-	if isPremium == 0 && len(viewedUsers) >= 10 {
+
+	user, err := u.usersRepo.GetByID(userId)
+	if err != nil {
+		return nil, errors.New("error get user: " + err.Error())
+	}
+	if user.IsPremium == 0 && len(viewedUsers) >= 10 {
 		return nil, errors.New("daily limit reached")
 	}
 	excludedUsers := viewedUsers
