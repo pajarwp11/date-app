@@ -16,8 +16,6 @@ type CustomClaim struct {
 	jwt.RegisteredClaims
 }
 
-var Tokens map[string]bool
-
 func CreateToken(userID int, roleID int, expirationTime time.Time) (string, error) {
 	claims := CustomClaim{
 		UserID: userID,
@@ -31,7 +29,6 @@ func CreateToken(userID int, roleID int, expirationTime time.Time) (string, erro
 	if err != nil {
 		return "", err
 	}
-	Tokens[tokenString] = true
 	return tokenString, nil
 }
 
@@ -81,8 +78,4 @@ func GetToken(r *http.Request) (string, error) {
 	}
 
 	return tokenString, nil
-}
-
-func TakeOutToken(tokenString string) {
-	delete(Tokens, tokenString)
 }

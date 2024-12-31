@@ -4,7 +4,6 @@ import (
 	"date-app/models"
 	usersModel "date-app/models/users"
 	"date-app/service/users"
-	"date-app/utils/jwt"
 	"encoding/json"
 	"net/http"
 )
@@ -12,7 +11,6 @@ import (
 type Users interface {
 	UserRegister(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
-	Logout(w http.ResponseWriter, r *http.Request)
 }
 
 type usersHandler struct {
@@ -88,24 +86,6 @@ func (u *usersHandler) Login(w http.ResponseWriter, r *http.Request) {
 	res.Code = http.StatusOK
 	res.Message = "login success"
 	res.Data = data
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(res)
-}
-
-func (u *usersHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	var res models.GeneralResponse
-	w.Header().Set("Content-Type", "application/json")
-	token, err := jwt.GetToken(r)
-	if err != nil {
-		res.Code = http.StatusBadRequest
-		res.Message = "error bind request: " + err.Error()
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
-		return
-	}
-	u.usersService.Logout(token)
-	res.Code = http.StatusOK
-	res.Message = "logout success"
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)
 }

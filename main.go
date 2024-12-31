@@ -3,7 +3,6 @@ package main
 import (
 	"date-app/config"
 	"date-app/handler/route"
-	"date-app/utils/jwt"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,7 +22,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	jwt.Tokens = map[string]bool{}
 	router := route.NewRoute()
 	err = http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("APP_PORT")), router)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 type Users interface {
 	Create(data *userModel.CreateUserRequest) error
 	Login(data *userModel.LoginRequest) (*userModel.LoginResponse, error)
-	Logout(token string)
 }
 
 type usersService struct {
@@ -57,8 +56,4 @@ func (u *usersService) Login(data *userModel.LoginRequest) (*userModel.LoginResp
 		ExpiredAt: expirationTime.Format("2006-01-02 15:04:05"),
 	}
 	return &tokenData, nil
-}
-
-func (u *usersService) Logout(token string) {
-	jwt.TakeOutToken(token)
 }
