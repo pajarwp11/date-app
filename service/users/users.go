@@ -2,7 +2,7 @@ package users
 
 import (
 	userModel "date-app/models/users"
-	"date-app/repository/users"
+	users "date-app/repository/users/mysql"
 	"date-app/utils/jwt"
 	"date-app/utils/password"
 	"errors"

@@ -3,7 +3,7 @@ package route
 import (
 	"date-app/config"
 	userHandler "date-app/handler/users"
-	userRepo "date-app/repository/users"
+	userRepo "date-app/repository/users/mysql"
 	userSvc "date-app/service/users"
 	"net/http"
 
