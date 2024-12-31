@@ -49,3 +49,21 @@ type UpdateIsPremiumRequest struct {
 	IsPremium *int `json:"is_premium"`
 	UserID    int  `json:"user_id"`
 }
+
+type UserLikes struct {
+	UserID      int
+	LikedUserID int
+}
+
+type UserMatches struct {
+	UserID1 int
+	UserID2 int
+}
+
+type UserLikeRequest struct {
+	UserID int `json:"user_id"`
+}
+
+type UserLikeResponse struct {
+	Message string `json:"message"`
+}

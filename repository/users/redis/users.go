@@ -10,7 +10,7 @@ import (
 )
 
 type Users interface {
-	SetViewedUser(ctx context.Context, key string, value []string, expiration time.Duration) error
+	SetViewedUser(ctx context.Context, key string, value []string) error
 	DeleteRedisKey(ctx context.Context, key string) error
 	GetViewedUser(ctx context.Context, key string) ([]string, error)
 }
@@ -24,12 +24,18 @@ func NewUsersRepository(rdb *redis.Client) Users {
 	}
 }
 
-func (u *usersRepository) SetViewedUser(ctx context.Context, key string, value []string, expiration time.Duration) error {
+func (u *usersRepository) SetViewedUser(ctx context.Context, key string, value []string) error {
 	serializedValue, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("could not serialize value: %v", err)
 	}
-	err = u.RDB.Set(ctx, key, serializedValue, expiration).Err()
+
+	now := time.Now()
+
+	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	durationUntilMidnight := midnight.Sub(now)
+
+	err = u.RDB.Set(ctx, key, serializedValue, durationUntilMidnight).Err()
 	if err != nil {
 		return fmt.Errorf("could not set key %s: %v", key, err)
 	}

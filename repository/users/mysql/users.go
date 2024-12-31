@@ -8,11 +8,15 @@ import (
 )
 
 type Users interface {
+	BeginTrx() (*sql.Tx, error)
 	Create(data *users.CreateUserRequest) error
 	GetByUsername(username string) (*users.UserData, error)
 	GetRandomUser(userId int, excludedId []string) (*users.UserResponse, error)
 	GetByID(id int) (*users.UserData, error)
 	UpdateIsPremium(id int, status int) error
+	InsertUserLikes(data *users.UserLikes) error
+	InsertUserMatches(data *users.UserMatches) error
+	GetUserLike(userId int, likedUserId int) (int, error)
 }
 type usersRepository struct {
 	DB *sql.DB
@@ -22,6 +26,10 @@ func NewUsersRepository(db *sql.DB) Users {
 	return &usersRepository{
 		DB: db,
 	}
+}
+
+func (u *usersRepository) BeginTrx() (*sql.Tx, error) {
+	return u.DB.Begin()
 }
 
 func (u *usersRepository) Create(data *users.CreateUserRequest) error {
@@ -103,4 +111,32 @@ func (u *usersRepository) UpdateIsPremium(id int, status int) error {
 	}
 
 	return nil
+}
+
+func (u *usersRepository) InsertUserLikes(data *users.UserLikes) error {
+	query := "INSERT INTO user_likes (user_id,liked_user_id) VALUES (?,?)"
+	_, err := u.DB.Exec(query, data.UserID, data.LikedUserID)
+	return err
+}
+
+func (u *usersRepository) InsertUserMatches(data *users.UserMatches) error {
+	query := "INSERT INTO user_matches (user_id_1,user_id_2) VALUES (?,?)"
+	_, err := u.DB.Exec(query, data.UserID1, data.UserID2)
+	return err
+}
+
+func (u *usersRepository) GetUserLike(userId int, likedUserId int) (int, error) {
+	query := "SELECT id FROM user_likes WHERE user_id=? AND liked_user_id=?"
+	row := u.DB.QueryRow(query, userId, likedUserId)
+
+	var id int
+	err := row.Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return id, nil
+		}
+		return id, err
+	}
+
+	return id, nil
 }

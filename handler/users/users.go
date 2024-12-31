@@ -14,6 +14,7 @@ type Users interface {
 	Login(w http.ResponseWriter, r *http.Request)
 	GetRandomUser(w http.ResponseWriter, r *http.Request)
 	UpdateIsPremium(w http.ResponseWriter, r *http.Request)
+	UserLike(w http.ResponseWriter, r *http.Request)
 }
 
 type usersHandler struct {
@@ -148,6 +149,48 @@ func (u *usersHandler) UpdateIsPremium(w http.ResponseWriter, r *http.Request) {
 	}
 	res.Code = http.StatusCreated
 	res.Message = "update success"
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(res)
+}
+
+func (u *usersHandler) UserLike(w http.ResponseWriter, r *http.Request) {
+	var res models.GeneralResponse
+	var req usersModel.UserLikeRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		res.Code = http.StatusBadRequest
+		res.Message = "error bind request: " + err.Error()
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	if req.UserID == 0 {
+		res.Code = http.StatusBadRequest
+		res.Message = "user id must be filled"
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	claims, err := jwt.GetClaims(r)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	data, err := u.usersService.UserLike(claims.UserID, &req)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	res.Code = http.StatusCreated
+	res.Message = "user like success"
+	res.Data = data
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(res)
 }

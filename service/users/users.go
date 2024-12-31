@@ -17,6 +17,7 @@ type Users interface {
 	Login(data *userModel.LoginRequest) (*userModel.LoginResponse, error)
 	GetRandomUser(userId int) (*userModel.UserResponse, error)
 	UpdateIsPremium(data *userModel.UpdateIsPremiumRequest) error
+	UserLike(userId int, data *userModel.UserLikeRequest) (*userModel.UserLikeResponse, error)
 }
 
 type usersService struct {
@@ -87,7 +88,7 @@ func (u *usersService) GetRandomUser(userId int) (*userModel.UserResponse, error
 		return nil, errors.New("error get user: " + err.Error())
 	}
 	viewedUsers = append(viewedUsers, strconv.Itoa(randomUser.ID))
-	err = u.usersRedisRepo.SetViewedUser(ctx, "user:view:"+strconv.Itoa(userId), viewedUsers, 0)
+	err = u.usersRedisRepo.SetViewedUser(ctx, "user:view:"+strconv.Itoa(userId), viewedUsers)
 	if err != nil {
 		return nil, errors.New("error get user: " + err.Error())
 	}
@@ -100,4 +101,54 @@ func (u *usersService) UpdateIsPremium(data *userModel.UpdateIsPremiumRequest) e
 		return errors.New("error update is premium: " + err.Error())
 	}
 	return nil
+}
+
+func (u *usersService) UserLike(userId int, data *userModel.UserLikeRequest) (*userModel.UserLikeResponse, error) {
+	var err error
+	var response userModel.UserLikeResponse
+
+	tx, err := u.usersRepo.BeginTrx()
+	if err != nil {
+		return nil, errors.New("error starting transaction: " + err.Error())
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	userLikeData := userModel.UserLikes{
+		UserID:      userId,
+		LikedUserID: data.UserID,
+	}
+	err = u.usersRepo.InsertUserLikes(&userLikeData)
+	if err != nil {
+		return nil, errors.New("error like user: " + err.Error())
+	}
+	userLikeId, err := u.usersRepo.GetUserLike(data.UserID, userId)
+	if err != nil {
+		return nil, errors.New("error like user: " + err.Error())
+	}
+	if userLikeId != 0 {
+		userMatchData := userModel.UserMatches{}
+		if userId < data.UserID {
+			userMatchData.UserID1 = userId
+			userMatchData.UserID2 = data.UserID
+		} else {
+			userMatchData.UserID1 = data.UserID
+			userMatchData.UserID2 = userId
+		}
+
+		err = u.usersRepo.InsertUserMatches(&userMatchData)
+		if err != nil {
+			return nil, errors.New("error match user: " + err.Error())
+		}
+		response.Message = "you are matched !!!"
+		tx.Commit()
+		return &response, nil
+	}
+	response.Message = "like success"
+	tx.Commit()
+	return &response, nil
 }
