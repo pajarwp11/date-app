@@ -1,26 +1,32 @@
 package users
 
 import (
+	"context"
 	userModel "date-app/models/users"
 	users "date-app/repository/users/mysql"
+	usersRedis "date-app/repository/users/redis"
 	"date-app/utils/jwt"
 	"date-app/utils/password"
 	"errors"
+	"strconv"
 	"time"
 )
 
 type Users interface {
 	Create(data *userModel.CreateUserRequest) error
 	Login(data *userModel.LoginRequest) (*userModel.LoginResponse, error)
+	GetRandomUser(userId int, isPremium int) (*userModel.UserResponse, error)
 }
 
 type usersService struct {
-	usersRepo users.Users
+	usersRepo      users.Users
+	usersRedisRepo usersRedis.Users
 }
 
-func NewUsersService(usersRepo users.Users) Users {
+func NewUsersService(usersRepo users.Users, usersRedisRepo usersRedis.Users) Users {
 	return &usersService{
-		usersRepo: usersRepo,
+		usersRepo:      usersRepo,
+		usersRedisRepo: usersRedisRepo,
 	}
 }
 
@@ -47,7 +53,7 @@ func (u *usersService) Login(data *userModel.LoginRequest) (*userModel.LoginResp
 		return nil, errors.New("password is not matched")
 	}
 	expirationTime := time.Now().Add(2 * time.Hour)
-	token, err := jwt.CreateToken(userData.ID, 0, expirationTime)
+	token, err := jwt.CreateToken(userData.ID, userData.IsPremium, expirationTime)
 	if err != nil {
 		return nil, errors.New("create token failed: " + err.Error())
 	}
@@ -56,4 +62,28 @@ func (u *usersService) Login(data *userModel.LoginRequest) (*userModel.LoginResp
 		ExpiredAt: expirationTime.Format("2006-01-02 15:04:05"),
 	}
 	return &tokenData, nil
+}
+
+func (u *usersService) GetRandomUser(userId int, isPremium int) (*userModel.UserResponse, error) {
+	ctx := context.Background()
+	viewedUsers, err := u.usersRedisRepo.GetViewedUser(ctx, "user:view:"+strconv.Itoa(userId))
+	if err != nil {
+		return nil, errors.New("error get user: " + err.Error())
+	}
+	if isPremium == 0 && len(viewedUsers) >= 10 {
+		return nil, errors.New("daily limit reached")
+	}
+	excludedUsers := viewedUsers
+	excludedUsers = append(excludedUsers, strconv.Itoa(userId))
+
+	randomUser, err := u.usersRepo.GetRandomUser(userId, excludedUsers)
+	if err != nil {
+		return nil, errors.New("error get user: " + err.Error())
+	}
+	viewedUsers = append(viewedUsers, strconv.Itoa(randomUser.ID))
+	err = u.usersRedisRepo.SetViewedUser(ctx, "user:view:"+strconv.Itoa(userId), viewedUsers, 0)
+	if err != nil {
+		return nil, errors.New("error get user: " + err.Error())
+	}
+	return randomUser, nil
 }

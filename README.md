@@ -13,6 +13,7 @@ CREATE TABLE date_app.users (
     bio TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_premium INT DEFAULT 0,
     UNIQUE(username),
     INDEX (username)
 );

@@ -12,6 +12,7 @@ import (
 type Users interface {
 	SetViewedUser(ctx context.Context, key string, value []string, expiration time.Duration) error
 	DeleteRedisKey(ctx context.Context, key string) error
+	GetViewedUser(ctx context.Context, key string) ([]string, error)
 }
 type usersRepository struct {
 	RDB *redis.Client
@@ -38,6 +39,9 @@ func (u *usersRepository) SetViewedUser(ctx context.Context, key string, value [
 func (u *usersRepository) GetViewedUser(ctx context.Context, key string) ([]string, error) {
 	serializedValue, err := u.RDB.Get(ctx, key).Bytes()
 	if err != nil {
+		if err == redis.Nil {
+			return []string{}, nil
+		}
 		return nil, fmt.Errorf("could not get key %s: %v", key, err)
 	}
 

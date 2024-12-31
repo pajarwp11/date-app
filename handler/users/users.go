@@ -4,6 +4,7 @@ import (
 	"date-app/models"
 	usersModel "date-app/models/users"
 	"date-app/service/users"
+	"date-app/utils/jwt"
 	"encoding/json"
 	"net/http"
 )
@@ -11,6 +12,7 @@ import (
 type Users interface {
 	UserRegister(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
+	GetRandomUser(w http.ResponseWriter, r *http.Request)
 }
 
 type usersHandler struct {
@@ -85,6 +87,32 @@ func (u *usersHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	res.Code = http.StatusOK
 	res.Message = "login success"
+	res.Data = data
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+func (u *usersHandler) GetRandomUser(w http.ResponseWriter, r *http.Request) {
+	var res models.GeneralResponse
+	w.Header().Set("Content-Type", "application/json")
+	claims, err := jwt.GetClaims(r)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	data, err := u.usersService.GetRandomUser(claims.UserID, claims.IsPremium)
+	if err != nil {
+		res.Code = http.StatusInternalServerError
+		res.Message = err.Error()
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	res.Code = http.StatusOK
+	res.Message = "get random user success"
 	res.Data = data
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(res)

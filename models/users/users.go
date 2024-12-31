@@ -10,6 +10,7 @@ type UserData struct {
 	Education  string
 	Occupation string
 	Bio        string
+	IsPremium  int
 }
 
 type CreateUserRequest struct {
@@ -31,4 +32,15 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token     string `json:"token"`
 	ExpiredAt string `json:"expired_at"`
+}
+
+type UserResponse struct {
+	ID         int    `json:"id"`
+	Username   string `json:"username"`
+	Fullname   string `json:"fullname"`
+	Gender     string `json:"gender"`
+	Location   string `json:"location"`
+	Education  string `json:"education"`
+	Occupation string `json:"occupation"`
+	Bio        string `json:"bio"`
 }
